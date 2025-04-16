@@ -23,6 +23,5 @@
 </ItemGroup>
 <ItemGroup>
   <Folder Include="Factory\DB\Init\Model\" />
-  <Folder Include="Service\" />
 </ItemGroup>
 </Project>

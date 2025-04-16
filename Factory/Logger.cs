@@ -1,11 +1,11 @@
 ﻿using Serilog;
-
 namespace Factory
 {
     public class LoggerService
     {
         public static void InitLogService(string LogFolder = "", string logLevel="debug")
         {
+            
             if (string.IsNullOrEmpty(LogFolder))
                 LogFolder = AppContext.BaseDirectory;
 
