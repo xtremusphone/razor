@@ -18,20 +18,20 @@ namespace Factory.DB.Init
             {
 
                 var result = new List<Task>();
-                var query = dbContext.QueryFactory.CreateTable(typeof(ModTableSSOUser));
-                result.Add(dbContext.ExecuteNonQueryAsync(query));
-
-                query = dbContext.QueryFactory.CreateTable(typeof(ModTableAuditLog));
-                result.Add(dbContext.ExecuteNonQueryAsync(query));
-
-                query = dbContext.QueryFactory.CreateTable(typeof(ModTableMachineLog));
-                result.Add(dbContext.ExecuteNonQueryAsync(query));
-
-                query = dbContext.QueryFactory.CreateTable(typeof(UserLoginLog));
-                result.Add(dbContext.ExecuteNonQueryAsync(query));
-
-                query = dbContext.QueryFactory.CreateTable(typeof(TrustedClient));
-                result.Add(dbContext.ExecuteNonQueryAsync(query));
+                //var query = dbContext.QueryFactory.CreateTable(typeof(ModTableSSOUser));
+                //result.Add(dbContext.ExecuteNonQueryAsync(query));
+//
+                //query = dbContext.QueryFactory.CreateTable(typeof(ModTableAuditLog));
+                //result.Add(dbContext.ExecuteNonQueryAsync(query));
+//
+                //query = dbContext.QueryFactory.CreateTable(typeof(ModTableMachineLog));
+                //result.Add(dbContext.ExecuteNonQueryAsync(query));
+//
+                //query = dbContext.QueryFactory.CreateTable(typeof(UserLoginLog));
+                //result.Add(dbContext.ExecuteNonQueryAsync(query));
+//
+                //query = dbContext.QueryFactory.CreateTable(typeof(TrustedClient));
+                //result.Add(dbContext.ExecuteNonQueryAsync(query));
 
 
                 var trustedClient = new TrustedClient()

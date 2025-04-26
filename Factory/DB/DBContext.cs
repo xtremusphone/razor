@@ -4,29 +4,28 @@ namespace Factory.DB
 {
     public class DBContext : IDatabaseService, IDisposable
     {
-     
         public enum DBType
         {
             SQLITE,
-            MYSQL
+            MYSQL,
+            POSTGRES
         }
         private bool disposedValue;
-
-        //public Lazy<SQLiteFactory> SQLiteDBInstance => new Lazy<SQLiteFactory>(() => GetSQLiteDBInstance());
-
-        private dynamic DBService;
-        public IQueryFactory QueryFactory;
+        private IDatabaseService DBService;
         private string ConnString;
 
-        public DBContext(string connString)
+        public DBContext(string connString, DBType ?dbType = DBType.POSTGRES)
         {
             ConnString = connString;
-            DBService = new SQLiteFactory(ConnString);
-            QueryFactory = new SqliteQueryFactory();
-
+            switch(dbType) {
+                 case DBType.SQLITE:
+                    DBService = new SQLiteFactory(ConnString);
+                    break;
+                case DBType.POSTGRES:
+                    DBService = new PostgresFactory(ConnString);
+                    break;
+            }
         }
-
-
 
         public Task<object> ExecuteScalarAsync(string query, DynamicSqlParameter? param = null)
         {
@@ -97,28 +96,15 @@ namespace Factory.DB
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
-
-                    //SQLiteDBInstance.Value.Dispose();
                     DBService.Dispose();
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
+                
                 disposedValue = true;
             }
         }
 
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~DBContext()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
-
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }

@@ -1,11 +1,10 @@
+using Factory;
 using Factory.DB;
-using Microsoft.Extensions.DependencyInjection;
 using Razor01.Global;
-using Serilog;
+using static Factory.DB.DBContext;
+
+
 var builder = WebApplication.CreateBuilder(args);
-
-var _configuration = builder.Configuration;
-
 
 // Add services to the container.
 builder.Services.AddDistributedMemoryCache();
@@ -16,28 +15,30 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddSingleton<GlobalConfig>(GlobalConfig.Instance);
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+builder.Services.AddRazorComponents();
 builder.Services.AddScoped<IDatabaseService, DBContext>(provide=>{  
-    return new DBContext(GlobalConfig.Instance.ConnectionString);
+    return new DBContext(GlobalConfig.Instance.ConnectionString, GlobalConfig.Instance.DBType.ToEnum<DBType>());
 });
+builder.Services.AddDistributedRedisCache(options => {
+    options.Configuration = GlobalConfig.Instance.RedisServerName;
+    options.InstanceName = "ASPSession_";
+}
+);
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
 app.UseAuthorization();
-
 app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
+app.UseSession();
+app.MapRazorPages().WithStaticAssets();
 
 app.Run();

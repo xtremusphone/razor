@@ -1,10 +1,14 @@
-﻿@page "/home"
-@model IndexModel
+﻿@page "/Home"
+@model IndexPage
+@using Microsoft.AspNetCore.Http
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome @Model.SignInUser.UserName</h1>
+    <p>Current user session ID ? @HttpContext.Session.Id == @HttpContext.Session.GetString("ASP_SessionID")</p>
+    <p>
+        @Model.UserInfo
+    </p>
 </div>

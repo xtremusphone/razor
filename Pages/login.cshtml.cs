@@ -1,50 +1,98 @@
+using System.Data;
+using System.Text;
 using Factory;
+using Factory.DB;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Model;
+using Microsoft.AspNetCore.Http;
+using System.Security.Policy;
+using System.Text.Encodings.Web;
+using Razor01.Global;
 
-
-namespace OfflineFirstRazor.Pages
+public class LoginPage : PageModel
 {
-    public class loginModel : PageModel
+    private readonly ILogger<LoginPage> logger;
+    private IDatabaseService db;
+    public string Message { get; set; }
+    public string ErrorMessage { get; set; }
+    public string Domain { get; set; }
+    public string RedirectURI = UrlEncoder
+                                    .Create()
+                                    .Encode("https://localhost:7207/OAuth");
+    public string OAuthURL = "https://kmjwy.wiremockapi.cloud/oauth/authorize";
+
+    public LoginPage(ILogger<LoginPage> _logger, IDatabaseService _db)
     {
-        public string Message { get; set; }
-        public string Domain { get; set; }
+        logger = _logger;
+        db = _db;
 
-        public loginModel()
+        Domain = DomainHelper.GetPCDomainName();
+        OAuthURL = $"{OAuthURL}?redirect_uri={RedirectURI}&client_id={GlobalConfig.Instance.OAuthClientId}&state=@state&nonce=@nonce";
+    }
+
+    public void OnGet()
+    {
+        if (HttpContext.Session.Get("ASP_SessionID") != null)
         {
-            Domain = DomainHelper.GetPCDomainName();
+            Response.Redirect("/Home");
         }
 
-        public void OnGet()
+        var nonce = Utility.GenerateNextNonce().ToString();
+        var state = Guid.NewGuid().ToString();
+
+        OAuthURL = OAuthURL
+                        .Replace("@state", state)
+                        .Replace("@nonce", nonce);
+
+        Response.Cookies.Append("oauth-state", state);
+        Response.Cookies.Append("oauth-nonce", nonce);
+
+        if (Request.Query["err"].FirstOrDefault() == null)
         {
-            //Console.WriteLine("aaa");
-            Message = " Hey Stranger, welcome to login page";
-            if (Request.Query.ContainsKey("err"))
+            Message = "Login to get started";
+        }
+        else
+        {
+            ErrorMessage = Request.Query["err"].First();
+        }
+    }
+
+    public async Task OnPost()
+    {
+        try
+        {
+            var loginRequest = new LoginModel(db)
             {
-                Message = Request.Query["err"].ToString();
+                Domain = Request.Form["domain"],
+                UserName = Request.Form["username"],
+                Password = Request.Form["password"]
+            };
+
+            switch (await loginRequest.Login())
+            {
+                case LoginStatus.Pass:
+                    logger.LogInformation($"User {loginRequest.UserName} successfully logged in.");
+
+                    HttpContext.Session.SetString("ASP_SessionID", HttpContext.Session.Id);
+                    HttpContext.Session.SetObject("User", loginRequest);
+
+                    Response.Redirect("/Home");
+                    break;
+                case LoginStatus.Locked:
+                    logger.LogError($"User {loginRequest.UserName} failed to log in. Account disabled.");
+
+                    ErrorMessage = "Account has been locked";
+                    break;
+                default:
+                    logger.LogError($"User {loginRequest.UserName} failed to log in. Invalid account.");
+
+                    ErrorMessage = "Invalid Username/Password";
+                    break;
             }
         }
-
-        public async Task OnPost()
+        catch (Exception ex)
         {
-            try
-            {
-                var loginRequest = new LoginModel()
-                {
-                    Domain = Request.Form["domain"],
-                    UserName = Request.Form["username"],
-                    Password = Request.Form["password"]
-                };
-
-                //==============================================================
-                //Authentication code
-                //===============================================================
-            }
-            catch (Exception ex)
-            {
-                Message = ex.Message;
-            }
+            ErrorMessage = ex.Message;
         }
-
     }
 }

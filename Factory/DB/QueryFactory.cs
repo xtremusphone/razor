@@ -1,5 +1,7 @@
-﻿using Serilog;
+﻿using Razor01.Global;
+using Serilog;
 using System.Reflection;
+using static Factory.DB.DBContext;
 
 namespace Factory.DB
 {
@@ -89,7 +91,7 @@ namespace Factory.DB
         internal static Tuple<string, DynamicSqlParameter> IsTableExists(string table)
         {
             var query = "SELECT name FROM sqlite_master WHERE type='table' AND name=@tableName";
-            var sqlParam = new DynamicSqlParameter();
+            var sqlParam = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
             sqlParam.Add("tableName", table);
 
             return Tuple.Create(query, sqlParam);
@@ -114,7 +116,7 @@ namespace Factory.DB
             Type objType = obj.GetType();
             var table = ReflectionFactory.GetTableAttribute(objType);
 
-            var sqlParam = new DynamicSqlParameter();
+            var sqlParam = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
             var queryParamBinders = new List<string>();
             var whereQuery = new List<string>();
             var propInfos = ReflectionFactory.GetMappableProperties(objType);
@@ -149,7 +151,7 @@ namespace Factory.DB
             if (string.IsNullOrEmpty(table) && string.IsNullOrEmpty(tableNameT)) throw new ArgumentNullException(nameof(table) + " cannot be null!");
             if (string.IsNullOrEmpty(table)) table = tableNameT;
 
-            var sqlParam = new DynamicSqlParameter();
+            var sqlParam = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
             var queryColumns = new List<string>();
             var queryParamBinders = new List<string>();
             var propInfos = ReflectionFactory.GetMappableProperties(typeof(T));
@@ -208,7 +210,7 @@ namespace Factory.DB
 
                 foreach (var obj in objList)
                 {
-                    var sqlParam = new DynamicSqlParameter();
+                    var sqlParam = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
 
                     foreach (var prop in propInfos)
                     {
@@ -285,7 +287,7 @@ namespace Factory.DB
             if (string.IsNullOrEmpty(table) && string.IsNullOrEmpty(tableNameT)) throw new ArgumentNullException(nameof(table) + " cannot be null!");
             if (string.IsNullOrEmpty(table)) table = tableNameT;
 
-            var sqlParam = new DynamicSqlParameter();
+            var sqlParam = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
 
             var updateQuery = new List<string>();
             var propInfos = ReflectionFactory.GetMappableProperties(typeof(T));

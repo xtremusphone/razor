@@ -1,44 +1,36 @@
-﻿using Serilog;
+using Serilog;
 using System.Data;
 using System.Diagnostics;
 using System.Reflection;
 using Newtonsoft.Json.Linq;
-using System.Data.SQLite;
-using Factory.DB;
+using Npgsql;
 
 namespace Factory.DB
 {
-    public class SQLiteFactory : IDatabaseService
+    public class PostgresFactory : IDatabaseService
     {
         private bool disposedValue;
 
         private string _connectionString = string.Empty;
-
-        //To allow different connection string
         public string ConnectionString { get { return _connectionString; } set { _connectionString = value; } }
 
-
-        public SQLiteFactory(string constr)
+        public PostgresFactory(string constr)
         {
-            //Set default connection string
             _connectionString = constr;
         }
 
-        public SQLiteConnection GetSqlConnection()
+        public NpgsqlConnection GetSqlConnection()
         {
-            //Log.Debug("GetSqlConnection: " + _connectionString);
-            var _connection = new SQLiteConnection(_connectionString);
-           
             try
             {
-                _connection.Open();
+                var _connection = NpgsqlDataSource.Create(_connectionString).OpenConnection();
                 return _connection;
             }
             catch (Exception ex)
             {
                 var funcName = string.Format("{0} : {1}", new StackFrame().GetMethod().DeclaringType.FullName, MethodBase.GetCurrentMethod().Name);
 
-                Log.Error("{funcName}: Connection to SQLITE Failed: {error}", funcName, ex.Message);
+                Log.Error("{funcName}: Connection to PostgresSQL Failed: {error}", funcName, ex.Message);
                 throw new Exception(ex.Message);
             }
 
@@ -54,7 +46,13 @@ namespace Factory.DB
                 {
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
+                    if (param != null)
+                    {
+                        foreach (NpgsqlParameter parameter in param.Get())
+                        {
+                            cmd.Parameters.Add(parameter);
+                        }
+                    }
 
                     var result = await cmd.ExecuteScalarAsync();
                     return result != DBNull.Value ? result : "";
@@ -69,16 +67,19 @@ namespace Factory.DB
 
         public async Task<int> ExecuteNonQueryAsync(string query, DynamicSqlParameter? param = null)
         {
-            //Log.Debug("ExecuteNonQueryAsync: " + query);
             try
             {
-                //Log.Debug("Before: GetSqlConnection");
                 using (var _connection = GetSqlConnection())
                 {
-                    //Log.Debug(_connection.ConnectionString);
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
+                    if (param != null)
+                    {
+                        foreach (NpgsqlParameter parameter in param.Get())
+                        {
+                            cmd.Parameters.Add(parameter);
+                        }
+                    }
 
                     return await cmd.ExecuteNonQueryAsync();
                 }
@@ -87,12 +88,6 @@ namespace Factory.DB
             catch (Exception ex)
             {
                 var funcName = string.Format("{0} : {1}", new StackFrame().GetMethod().DeclaringType.FullName, MethodBase.GetCurrentMethod().Name);
-                //Log.Error(query);
-                //if (param != null)
-                //{
-                //    Log.Error("Param");
-                //}
-                //Log.Error(ex.Message);
                 throw new SqlException(ex.Message, ex, funcName, query, param);
             }
         }
@@ -111,7 +106,7 @@ namespace Factory.DB
                 using (var _connection = GetSqlConnection())
                 {
 
-                    using (var command = new SQLiteCommand("PRAGMA journal_mode = WAL;", _connection))
+                    using (var command = new NpgsqlCommand("PRAGMA journal_mode = WAL;", _connection))
                     {
                         command.ExecuteNonQuery();
                     }
@@ -119,7 +114,13 @@ namespace Factory.DB
                     using (var cmd = _connection.CreateCommand())
                     {
                         cmd.CommandText = query;
-                        if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
+                        if (param != null)
+                        {
+                            foreach (NpgsqlParameter parameter in param.Get())
+                            {
+                                cmd.Parameters.Add(parameter);
+                            }
+                        }
 
                         return await cmd.ExecuteNonQueryAsync();
                     }
@@ -142,7 +143,13 @@ namespace Factory.DB
                 {
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
+                    if (param != null)
+                    {
+                        foreach (NpgsqlParameter parameter in param.Get())
+                        {
+                            cmd.Parameters.Add(parameter);
+                        }
+                    }
 
                     var dataReader = await cmd.ExecuteReaderAsync();
                     var dt = new DataTable();
@@ -173,7 +180,7 @@ namespace Factory.DB
                 throw new SqlException(ex.Message, ex, funcName, query, param);
             }
         }
-               
+
         public async Task<DataSet> GetDataSetAsync(string query, DynamicSqlParameter? param = null)
         {
 
@@ -183,9 +190,15 @@ namespace Factory.DB
                 {
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
+                    if (param != null)
+                    {
+                        foreach (NpgsqlParameter parameter in param.Get())
+                        {
+                            cmd.Parameters.Add(parameter);
+                        }
+                    }
 
-                    var sda = new SQLiteDataAdapter(cmd);
+                    var sda = new NpgsqlDataAdapter(cmd);
                     var ds = new DataSet();
                     sda.Fill(ds);
 
@@ -213,10 +226,8 @@ namespace Factory.DB
                 {
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
 
                     var dataReader = await cmd.ExecuteReaderAsync();
-                    //if (typeof(T).GetCustomAttributes<SqlitePropertyAttribute>().Any())
                     return dataReader.MapPropertyAttribute<T>();
                 }
 
@@ -236,10 +247,7 @@ namespace Factory.DB
                 {
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
-
                     var dataReader = await cmd.ExecuteReaderAsync();
-                    //if (typeof(T).GetCustomAttributes<SqlitePropertyAttribute>().Any())
                     return dataReader.MapToJsonArray();
                 }
 
@@ -259,10 +267,15 @@ namespace Factory.DB
                 {
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
+                    if (param != null) 
+                    {
+                        foreach(NpgsqlParameter parameter in param.Get())
+                        {
+                            cmd.Parameters.Add(parameter);
+                        }
+                    }
 
                     var dataReader = await cmd.ExecuteReaderAsync();
-                    //if (typeof(T).GetCustomAttributes<SqlitePropertyAttribute>().Any())
                     return dataReader.ToDataList();
                 }
 
@@ -308,12 +321,7 @@ namespace Factory.DB
             {
                 using (var _connection = GetSqlConnection())
                 {
-                    //using (var command = new SQLiteCommand("PRAGMA synchronous = NORMAL;", _connection))
-                    //{
-                    //    command.ExecuteNonQuery();
-                    //}
-
-                    using (var command = new SQLiteCommand("PRAGMA journal_mode = WAL;", _connection))
+                    using (var command = new NpgsqlCommand("PRAGMA journal_mode = WAL;", _connection))
                     {
                         command.ExecuteNonQuery();
                     }
@@ -322,15 +330,13 @@ namespace Factory.DB
                     stopwatch.Start();
                     using (var trans = _connection.BeginTransaction())
                     {
-                        using (var myCmd = new SQLiteCommand(query, _connection, trans))
+                        using (var myCmd = new NpgsqlCommand(query, _connection, trans))
                         {
                             myCmd.CommandType = CommandType.Text;
 
                             foreach (var dynamicSQlParams in bulkList)
                             {
-                                //Log.Debug(dynamicSQlParams.GetAsString());
                                 myCmd.Parameters.Clear();
-                                myCmd.SetParameters((SQLiteParameter[]) dynamicSQlParams.Get());
                                 myCmd.ExecuteNonQuery();
                             }
 
@@ -339,15 +345,10 @@ namespace Factory.DB
                     }
                     stopwatch.Stop();
 
-                    // Get the elapsed time
                     TimeSpan elapsedTime = stopwatch.Elapsed;
 
-                    // Log the processing time
-                    //Console.WriteLine("Processing time: " + elapsedTime);
                     Log.Information("Processing time: " + elapsedTime);
-                    // Optional: Log the processing time in a specific format
                     string formattedTime = $"{elapsedTime.Hours:00}:{elapsedTime.Minutes:00}:{elapsedTime.Seconds:00}.{elapsedTime.Milliseconds / 10:00}";
-                    //Console.WriteLine("Processing time (formatted): " + formattedTime);
                     Log.Information("Processing time (formatted): " + formattedTime);
                 }
             }
@@ -361,7 +362,6 @@ namespace Factory.DB
 
         public void BulkInsert<T>(T obj, List<List<DynamicSqlParameter>> bulkList)
         {
-            //Log.Information($"{new StackFrame().GetMethod().DeclaringType.FullName} : {MethodBase.GetCurrentMethod().Name}");
             var query = QueryFactory.Insert(obj);
 
             try
@@ -424,7 +424,6 @@ namespace Factory.DB
                 {
                     var cmd = _connection.CreateCommand();
                     cmd.CommandText = query;
-                    if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
 
                     var dataReader = await cmd.ExecuteReaderAsync();
                     //if (typeof(T).GetCustomAttributes<SqlitePropertyAttribute>().Any())
@@ -439,18 +438,6 @@ namespace Factory.DB
             }
         }
 
-        //protected void CloseConnection()
-        //{
-        //    if (_connection != null)
-        //    {
-        //        if (_connection.State == System.Data.ConnectionState.Open)
-        //            _connection.Close();
-        //    }
-
-        //    _connection.Dispose();
-        //    _connection = null;
-        //}
-
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -459,20 +446,9 @@ namespace Factory.DB
                 {
                     // TODO: dispose managed state (managed objects)
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
-                //CloseConnection();
             }
         }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~MSSql()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
 
         public void Dispose()
         {

@@ -1,33 +1,28 @@
 ﻿
+using System.Data.Common;
 using System.Data.SQLite;
 
 
 namespace Factory.DB
 {
-    public class DynamicSqlParameter
+    public class SQLiteSqlParameter : ISQLParameter
     {
-
         private List<Tuple<string, object>> sqlParams;
-        public DynamicSqlParameter()
+
+        public SQLiteSqlParameter()
         {
             sqlParams = new List<Tuple<string, object>>();
         }
 
-        public SQLiteParameter[] SQLiteParameters
+        public DbParameter[] Get()
         {
-            get
+            var sqlParameter = new List<SQLiteParameter>();
+            foreach (var param in sqlParams)
             {
-                var sqlParameter = new List<SQLiteParameter>();
-                foreach (var param in sqlParams)
-                {
-                    sqlParameter.Add(new SQLiteParameter(param.Item1, param.Item2));
-                }
-                return sqlParameter.ToArray();
-
+                sqlParameter.Add(new SQLiteParameter(param.Item1, param.Item2));
             }
+            return sqlParameter.ToArray();
         }
-
-        
 
         public void Add(string name, object value)
         {
@@ -35,10 +30,14 @@ namespace Factory.DB
 
         }
 
-
         public string GetAsString()
         {
             return string.Join(',', sqlParams.Select(tuple => $"{tuple.Item1}: {tuple.Item2}"));
+        }
+
+        public void Clear()
+        {
+            sqlParams.Clear();
         }
     }
 }

@@ -3,6 +3,7 @@ using Serilog;
 using System.Data;
 using System.Diagnostics;
 using System.Reflection;
+using static Factory.DB.DBContext;
 
 namespace Factory.DB.Model
 {
@@ -40,7 +41,7 @@ namespace Factory.DB.Model
         public static async Task<bool> Load(this IDBObjectBase thisObj)
         {
             var objType = thisObj.GetType();
-            var sqlParam = new DynamicSqlParameter();
+            var sqlParam = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
 
             var propInfos = ReflectionFactory.GetMappableProperties(objType);
             var tableName = ReflectionFactory.GetTableAttribute(objType);
@@ -107,7 +108,7 @@ namespace Factory.DB.Model
         {
             var objType = thisObj.GetType();
             var result = 0;
-            var sqlParam = new DynamicSqlParameter();
+            var sqlParam = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
 
             var propInfos = ReflectionFactory.GetMappableProperties(objType);
             var tableName = ReflectionFactory.GetTableAttribute(objType);
@@ -128,16 +129,16 @@ namespace Factory.DB.Model
                         if (autoUpdate)
                         {
                             //Update
-                            var updateQuery = dbContext.QueryFactory.Update(thisObj);
-                            result = await dbContext.ExecuteNonQueryAsync(updateQuery.Item1, updateQuery.Item2);
+                            //var updateQuery = dbContext.QueryFactory.Update(thisObj);
+                            //result = await dbContext.ExecuteNonQueryAsync(updateQuery.Item1, updateQuery.Item2);
                         }
                         //throw new Exception($"{primaryKey.Key} with values {primaryKey.Value} already exists in {tableName}!");
                     }
                     else
                     {
                         //insert
-                        var insertQuery = dbContext.QueryFactory.Insert(thisObj);
-                        result = await dbContext.ExecuteNonQueryAsync(insertQuery.Item1, insertQuery.Item2);
+                        //var insertQuery = dbContext.QueryFactory.Insert(thisObj);
+                        //result = await dbContext.ExecuteNonQueryAsync(insertQuery.Item1, insertQuery.Item2);
                     }
                 }
 

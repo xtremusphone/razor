@@ -30,7 +30,7 @@ namespace Factory.DB
             {
                 var cmd = _connection.CreateCommand();
                 cmd.CommandText = query;
-                if (param != null) cmd.SetParameters(param.SQLiteParameters);
+                if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
 
                 var result = await cmd.ExecuteScalarAsync();
                 return result != DBNull.Value ? result : "";
@@ -49,7 +49,7 @@ namespace Factory.DB
 
                 var cmd = _connection.CreateCommand();
                 cmd.CommandText = query;
-                if (param != null) cmd.SetParameters(param.SQLiteParameters);
+                if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
 
                 return await cmd.ExecuteNonQueryAsync();
 
@@ -69,7 +69,7 @@ namespace Factory.DB
 
                 var cmd = _connection.CreateCommand();
                 cmd.CommandText = query;
-                if (param != null) cmd.SetParameters(param.SQLiteParameters);
+                if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
 
                 var dataReader = await cmd.ExecuteReaderAsync();
                 var dt = new DataTable();
@@ -109,7 +109,7 @@ namespace Factory.DB
 
                 var cmd = _connection.CreateCommand();
                 cmd.CommandText = query;
-                if (param != null) cmd.SetParameters(param.SQLiteParameters);
+                if (param != null) cmd.SetParameters((SQLiteParameter[]) param.Get());
 
                 var dataReader = cmd.ExecuteReader();
                 var dt = new DataTable();

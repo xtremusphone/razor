@@ -1,0 +1,44 @@
+@page "/Update"
+@model UpdatePage
+@{
+    Layout = null;
+    ViewData["Title"] = "Update Information";
+}
+<html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@("@tailwindcss")/browser@4"></script>
+    <title>Razor - Update Information</title>
+</head>
+
+<body>
+    <div class="w-screen h-screen bg-slate-100 flex justify-center items-center">
+        <form method="post" asp-page-handler="/Update">
+            <div class="w-max h-max min-w-96 px-6 py-10 rounded-2xl bg-slate-800 shadow-2xl">
+                <div class="flex justify-between">
+                    <h2 class="font-bold text-white text-3xl mb-2">Update information</h2>
+                    <h2 class="text-cyan-500 italic text-sm">Razor</h2>
+                </div>
+
+                <p class="text-white italic font-extralight text-sm">Creating new account</p>
+
+                <div class="mb-4 mt-2">
+                    <label class="text-white" for="username">Username</label>
+                    <input type="text" id="username"
+                        class="flex h-9 w-full rounded-md border border-input bg-slate-100 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 max-w-xs"
+                        placeholder="Enter your username to create account" name="username" />
+                </div>
+
+                <button
+                    class=" bg-cyan-500 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+                    type="submit">
+                    Submit
+                </button>
+
+                <input type="hidden" id="UID" name="UID" value="@Model.UID">
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
