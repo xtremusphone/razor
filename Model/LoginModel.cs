@@ -53,7 +53,7 @@ namespace Model
             param.Add("@username", UserName);
             param.Add("@newusername", newUsername);
 
-            var updateQuery = $"UPDATE common.user SET username=@newusername , is_new=false WHERE username=@username";
+            var updateQuery = "UPDATE common.user SET username=@newusername , is_new=false WHERE username=@username";
 
             UserName = newUsername;
             IsNew = false;
@@ -66,7 +66,7 @@ namespace Model
             var param = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
             param.Add("@username", UserName);
 
-            var query = $"SELECT * FROM common.user WHERE username=@username";
+            var query = "SELECT * FROM common.user WHERE username=@username";
             var temp = db.GetDataSetAsync(query, param);
 
             var dataReader = temp.Result.CreateDataReader();
@@ -81,7 +81,7 @@ namespace Model
 
             IsNew = dataReader.GetBoolean("is_new");
             var loginTryCount = dataReader.GetInt32("retry_count");
-            
+
             if (BCrypt.Net.BCrypt.Verify(GetPasswordAsString(), dataReader.GetString("password")) == false)
             {
                 var lockQuery = "";
@@ -134,6 +134,24 @@ namespace Model
             var param = new DynamicSqlParameter(GlobalConfig.Instance.DBType.ToEnum<DBType>());
             param.Add("@username", UserName);
 
+            var query = "SELECT * FROM common.user WHERE username=@username";
+            var temp = db.GetDataSetAsync(query, param);
+
+            var dataReader = temp.Result.CreateDataReader();
+
+            if (dataReader.HasRows == false)
+            {
+                return LoginStatus.Failed;
+            }
+
+            // To move the row pointer
+            dataReader.Read();
+
+            if (dataReader.GetBoolean("disable"))
+            {
+                return LoginStatus.Locked;
+            }
+
             await LoginSuccessAsync(param, idp, authToken);
 
             return LoginStatus.Pass;
@@ -144,7 +162,7 @@ namespace Model
             var tokenProvided = "";
             if (token != null)
             {
-                tokenProvided = $"last_idp_token = @token,";
+                tokenProvided = "last_idp_token = @token,";
                 param.Add("@token", token);
             }
 

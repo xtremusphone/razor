@@ -13,48 +13,55 @@
 <body>
     <div class=" w-screen h-screen bg-slate-100 flex justify-center items-center">
         <form method="post" asp-page-handler="/">
-            <div class="w-max h-max min-w-96 px-6 py-10 rounded-2xl bg-slate-800 shadow-2xl">
-                <div class="flex justify-between">
-                    <h2 class="font-bold text-white text-3xl mb-2">Login</h2>
-                    <h2 class="text-cyan-500 italic text-sm">Razor</h2>
+            <div class="flex h-max rounded-2xl bg-slate-800 shadow-2xl overflow-hidden">
+                <div class="w-96 hidden lg:block">
+                    <img src="https://img.freepik.com/premium-photo/close-up-paper-currency_1048944-13161392.jpg"
+                        class="w-full h-full object-cover" />
                 </div>
 
-                <p class="text-white font-extralight text-sm">
-                    @Model.Message
-                </p>
-                <p class="text-red-600">
-                    @Model.ErrorMessage
-                </p>
+                <div class="min-w-96 px-6 py-10 ">
+                    <div class="flex justify-between">
+                        <h2 class="font-bold text-white text-3xl mb-2">Login</h2>
+                        <h2 class="text-cyan-500 italic text-sm font-mono">Razor</h2>
+                    </div>
 
-                <div class="mb-4 mt-2">
-                    <label class="text-white" for="username">Username</label>
-                    <input type="text" id="username"
-                        class="flex h-9 w-full rounded-md border border-input bg-slate-100 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 max-w-xs"
-                        name="username" />
-                </div>
+                    <p class="text-white font-extralight text-sm">
+                        @Model.Message
+                    </p>
+                    <p class="text-red-600">
+                        @Model.ErrorMessage
+                    </p>
 
-                <div class="mb-4">
-                    <label class="text-white" for="password">Password</label>
-                    <input type="password" id="password" name="password"
-                        class="flex h-9 w-full rounded-md border border-input bg-slate-100 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 max-w-xs" />
-                </div>
+                    <div class="mb-4 mt-2">
+                        <label class="text-white" for="username">Username</label>
+                        <input type="text" id="username"
+                            class="flex h-9 w-full rounded-md border border-input bg-slate-100 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            name="username" />
+                    </div>
 
-                <div class="mb-4">
-                    <label class="text-white" for="domain">Domain</label>
-                    <input type="text" id="domain" name="domain" value="@Model.Domain" disabled
-                        class="flex h-9 w-full rounded-md border border-input bg-slate-100 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 max-w-xs" />
-                </div>
+                    <div class="mb-4">
+                        <label class="text-white" for="password">Password</label>
+                        <input type="password" id="password" name="password"
+                            class="flex h-9 w-full rounded-md border border-input bg-slate-100 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
+                    </div>
 
-                <div class="mt-2 mb-4 flex justify-between items-center">
-                    <button
-                        class=" bg-cyan-500 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
-                        type="submit">
-                        Login
-                    </button>
+                    <div class="mb-4">
+                        <label class="text-white" for="domain">Domain</label>
+                        <input type="text" id="domain" name="domain" value="@Model.Domain" disabled
+                            class="flex h-9 w-full rounded-md border border-input bg-slate-100 px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
+                    </div>
 
-                    <a class="text-white underline text-sm" href="@Model.OAuthURL">
-                        Sign In using OAuth 2.0
-                    </a>
+                    <div class="mt-2 mb-4 flex justify-between items-center">
+                        <button
+                            class=" bg-cyan-500 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+                            type="submit">
+                            Login
+                        </button>
+
+                        <a class="text-white underline text-sm" href="@Model.OAuthURL">
+                            Sign In using OAuth 2.0
+                        </a>
+                    </div>
                 </div>
             </div>
         </form>

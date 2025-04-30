@@ -19,7 +19,7 @@ public class LoginPage : PageModel
     public string RedirectURI = UrlEncoder
                                     .Create()
                                     .Encode("https://localhost:7207/OAuth");
-    public string OAuthURL = "https://kmjwy.wiremockapi.cloud/oauth/authorize";
+    public string OAuthURL { get; set; }
 
     public LoginPage(ILogger<LoginPage> _logger, IDatabaseService _db)
     {
@@ -27,7 +27,7 @@ public class LoginPage : PageModel
         db = _db;
 
         Domain = DomainHelper.GetPCDomainName();
-        OAuthURL = $"{OAuthURL}?redirect_uri={RedirectURI}&client_id={GlobalConfig.Instance.OAuthClientId}&state=@state&nonce=@nonce";
+        OAuthURL = $"{GlobalConfig.Instance.OAuthURL}/oauth/authorize?redirect_uri={RedirectURI}&client_id={GlobalConfig.Instance.OAuthClientId}&state=@state&nonce=@nonce";
     }
 
     public void OnGet()

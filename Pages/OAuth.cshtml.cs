@@ -11,8 +11,8 @@ public class OAuthPage : PageModel
 {
     private readonly ILogger<OAuthPage> _logger;
     private readonly IDatabaseService _databaseService;
-    private string OAuthTokenURL = "https://kmjwy.wiremockapi.cloud";
-    private string OAuthWellKnownURI = "/.well-known/jwks.json"; 
+    private readonly UrlEncoder encoder = UrlEncoder.Create();
+    private string OAuthWellKnownURI = "/.well-known/jwks.json";
 
     public OAuthPage(ILogger<OAuthPage> logger, IDatabaseService databaseService)
     {
@@ -22,26 +22,32 @@ public class OAuthPage : PageModel
 
     public async Task OnGet()
     {
+        var cookieState = Request.Cookies["oauth-state"];
+        var cookieNonce = Request.Cookies["oauth-nonce"];
+
         var state = Request.Query["state"].First()?.ToString();
-        if (state == null || state != Request.Cookies["oauth-state"])
+        if (state == null || state != cookieState)
         {
-            var invalidMessage = UrlEncoder.Create().Encode("OAuth: Invalid page state");
+            var invalidMessage = encoder.Encode("OAuth: Invalid page state");
             Response.Redirect($"/?err={invalidMessage}");
+            return;
         }
 
         var code = Request.Query["code"].First()?.ToString();
         if (code == null)
         {
-            var invalidMessage = UrlEncoder.Create().Encode("OAuth: Missing code");
+            var invalidMessage = encoder.Encode("OAuth: Missing code");
             Response.Redirect($"/?err={invalidMessage}");
+            return;
         }
 
         var codePlain = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(code));
-        var codeInfo = codePlain.Split("..");
-        if (codeInfo[3] != Request.Cookies["oauth-nonce"])
+        var codeNonce = codePlain.Split("..")[3];
+        if (codeNonce != cookieNonce)
         {
-            var invalidMessage = UrlEncoder.Create().Encode("OAuth: Nonce mismatch");
+            var invalidMessage = encoder.Encode("OAuth: Nonce mismatch");
             Response.Redirect($"/?err={invalidMessage}");
+            return;
         }
 
         UserInfoResponse resp = null;
@@ -53,68 +59,71 @@ public class OAuthPage : PageModel
             loginDetail = LoginModel.GetUserByEmail(_databaseService, resp.email);
             newAccount = loginDetail.IsNew;
         }
-        catch(Exception)
+        catch (InvalidDataException)
         {
-            newAccount =true;
-
+            var invalidMessage = encoder.Encode("OAuth: Invalid authorization ID Token");
+            Response.Redirect($"/?err={invalidMessage}");
+            return;
+        }
+        catch (Exception)
+        {
+            newAccount = true;
             loginDetail = await LoginModel.RegisterForIDP(_databaseService, resp.email, code);
         }
 
         var loggedIn = await loginDetail.LoginViaIDP("oauth2", code);
-
         if (loggedIn == LoginStatus.Locked)
         {
-            var accountLocked = UrlEncoder.Create().Encode("OAuth: Account locked");
+            var accountLocked = encoder.Encode("OAuth: Account locked");
             Response.Redirect($"/?err={accountLocked}");
             return;
         }
 
-        
         Response.Cookies.Append("oauth-code", code);
         Response.Cookies.Delete("oauth-state");
 
         if (newAccount)
         {
             Response.Redirect($"/Update?token={loginDetail.UserName}");
-            return;
         }
         else
         {
             HttpContext.Session.SetString("ASP_SessionID", HttpContext.Session.Id);
             HttpContext.Session.SetObject("User", loginDetail);
-            
+
             Response.Redirect("/Home");
-            return;
         }
     }
 
     private async Task<UserInfoResponse> GetUserInfo(string code)
     {
-        HttpClient httpClient = new()
+        using (var httpClient = new HttpClient() { BaseAddress = new Uri(GlobalConfig.Instance.OAuthURL) })
         {
-            BaseAddress = new Uri(OAuthTokenURL),
-        };
+            StringContent content = new
+            (
+                $"code={code}",
+                Encoding.UTF8,
+                "application/x-www-form-urlencoded"
+            );
 
-        StringContent content = new
-        (
-            $"code={code}",
-            Encoding.UTF8,
-            "application/x-www-form-urlencoded"
-        );
+            var response = await httpClient.PostAsync("/oauth/token", content);
+            response.EnsureSuccessStatusCode();
 
-        HttpResponseMessage response = await httpClient.PostAsync("/oauth/token", content);
-        response.EnsureSuccessStatusCode();
+            var token = await response.Content.ReadFromJsonAsync<TokenResponse>();
+            var valid = await VerifyIDTokenAsync(token);
 
-        var token = await response.Content.ReadFromJsonAsync<TokenResponse>();
+            if (!valid)
+            {
+                throw new InvalidDataException("Invalid ID Token");
+            }
 
-        var valid = await VerifyIDTokenAsync(token);
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token.access_token}");
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token.access_token}");
+            var userInfoResponse = await httpClient.GetAsync("/userinfo");
+            userInfoResponse.EnsureSuccessStatusCode();
 
-        HttpResponseMessage userInfoResponse = await httpClient.GetAsync("/userinfo");
-        userInfoResponse.EnsureSuccessStatusCode();
-
-        return await userInfoResponse.Content.ReadFromJsonAsync<UserInfoResponse>();
+            return await userInfoResponse.Content.ReadFromJsonAsync<UserInfoResponse>();
+        }
     }
 
     private async Task<bool> VerifyIDTokenAsync(TokenResponse token)
@@ -126,7 +135,7 @@ public class OAuthPage : PageModel
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKeyResolver = (s, securityToken, identifier, parameters) => jsonWebKeySet.GetSigningKeys().Where(secKey => secKey.KeyId == identifier),
-            ValidIssuer = OAuthTokenURL,
+            ValidIssuer = GlobalConfig.Instance.OAuthURL,
             ValidAudience = GlobalConfig.Instance.OAuthClientId
         };
 
@@ -149,7 +158,7 @@ public class OAuthPage : PageModel
     {
         using (var httpClient = new HttpClient())
         {
-            var json = await httpClient.GetStringAsync(OAuthTokenURL + OAuthWellKnownURI);
+            var json = await httpClient.GetStringAsync(GlobalConfig.Instance.OAuthURL + OAuthWellKnownURI);
             return new JsonWebKeySet(json);
         }
     }

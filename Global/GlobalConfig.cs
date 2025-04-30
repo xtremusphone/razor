@@ -61,6 +61,9 @@ namespace Razor01.Global
         public string SQLiteConnectionstring { get { return _sqlLiteConnectionString; } }
         public string PostgresConnectionString { get { return _postgresConnectionString; } }
         public string RedisServerName { get { return _redisServerName; } }
+        public string OAuthURL { get {
+            return "https://kmjwy.wiremockapi.cloud";
+        }}
         public string OAuthClientId {get {
             return "21b0dceb-7d9b-4ae5-ba5c-1274b0512155";
         }}
