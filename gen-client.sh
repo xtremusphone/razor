@@ -1,0 +1,1 @@
+openapi-generator-cli generate -g csharp -i http://10.141.19.225:6868/swagger/v1/swagger.json -o API/RPNRSS

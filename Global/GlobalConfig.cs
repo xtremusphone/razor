@@ -20,6 +20,10 @@ namespace Razor01.Global
         private readonly string _sqlLiteConnectionString;
         private readonly string _postgresConnectionString;
         private readonly string _redisServerName;
+        private readonly string _RPNRSSURL;
+        private readonly string _OAuthURL;
+        private readonly string _OAuthClientId;
+        private readonly string _OAuthRedirectURL;
 
         public GlobalConfig()
         {
@@ -53,6 +57,11 @@ namespace Razor01.Global
                     _connectionString = _postgresConnectionString;
                     break;
             }
+
+            _RPNRSSURL = configuration.GetValue($"AppConfig:{_env}:RPNRSSURL", "");
+            _OAuthURL = configuration.GetValue($"AppConfig:{_env}:OAuthURL", "");
+            _OAuthClientId = configuration.GetValue($"AppConfig:{_env}:OAuthClientId", "");
+            _OAuthRedirectURL = configuration.GetValue($"AppConfig:{_env}:OAuthRedirectURL", "");
         }
 
         public string Env { get { return _env; } }
@@ -61,11 +70,9 @@ namespace Razor01.Global
         public string SQLiteConnectionstring { get { return _sqlLiteConnectionString; } }
         public string PostgresConnectionString { get { return _postgresConnectionString; } }
         public string RedisServerName { get { return _redisServerName; } }
-        public string OAuthURL { get {
-            return "https://kmjwy.wiremockapi.cloud";
-        }}
-        public string OAuthClientId {get {
-            return "21b0dceb-7d9b-4ae5-ba5c-1274b0512155";
-        }}
+        public string OAuthURL { get { return _OAuthURL; }}
+        public string OAuthClientId {get { return _OAuthClientId; }}
+        public string OAuthRedirectURL {get {return _OAuthRedirectURL;}}
+        public string RPNRSSURL {get { return _RPNRSSURL; }}
     }
 }

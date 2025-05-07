@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Policy;
 using System.Text.Encodings.Web;
 using Razor01.Global;
+using Microsoft.AspNetCore.Http.Extensions;
 
 public class LoginPage : PageModel
 {
@@ -16,9 +17,7 @@ public class LoginPage : PageModel
     public string Message { get; set; }
     public string ErrorMessage { get; set; }
     public string Domain { get; set; }
-    public string RedirectURI = UrlEncoder
-                                    .Create()
-                                    .Encode("https://localhost:7207/OAuth");
+    public string RedirectURI {get;set;}
     public string OAuthURL { get; set; }
 
     public LoginPage(ILogger<LoginPage> _logger, IDatabaseService _db)
@@ -27,11 +26,15 @@ public class LoginPage : PageModel
         db = _db;
 
         Domain = DomainHelper.GetPCDomainName();
-        OAuthURL = $"{GlobalConfig.Instance.OAuthURL}/oauth/authorize?redirect_uri={RedirectURI}&client_id={GlobalConfig.Instance.OAuthClientId}&state=@state&nonce=@nonce";
     }
 
     public void OnGet()
     {
+        RedirectURI = UrlEncoder
+                        .Create()
+                        .Encode(HttpContext.Request.GetDisplayUrl() + "OAuth");
+        OAuthURL = $"{GlobalConfig.Instance.OAuthURL}/oauth/authorize?redirect_uri={RedirectURI}&client_id={GlobalConfig.Instance.OAuthClientId}&state=@state&nonce=@nonce";
+
         if (HttpContext.Session.Get("ASP_SessionID") != null)
         {
             Response.Redirect("/Home");
